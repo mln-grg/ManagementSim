@@ -1,59 +1,71 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NPC
 {
     [Serializable]
     public class NPC_State
     {
-        protected List<NPC_Action> Actions = new List<NPC_Action>();
+        public StateType type;
 
-        protected event Action RemoveState = delegate { };
-        protected Action subscriber;
-        public virtual void OnStateEnter(Action action)
+        protected List<NPC_Action> actionList = new List<NPC_Action>();
+
+        public virtual void OnStateEnter<T>(StateType stateType , ActionType actionType , T data)
         {
-
-            OnStateEnabled(action);
+            type = stateType;
+            AddAction<T>(actionType,data);
+            OnStateEnabled();
         }
 
-        public virtual void OnStateEnabled(Action action)
+        public virtual void OnStateEnabled()
         {
-            subscriber= action;
+           
+        }
 
-            if (subscriber == null)
-                throw new ArgumentNullException("Subscriber to state event is null");
+        private NPC_Action CreateAction<T>(ActionType actionType , T data)
+        {
+            switch (actionType)
+            {
+                case ActionType.Idle:
+                    NPC_Action IdleAction = new Action_Idle();
+                    IdleAction.Initialize<T>(data);
+                    actionList.Add(IdleAction);
+                    return IdleAction;
 
-            RemoveState += subscriber;
+                case ActionType.Walk:
+                    NPC_Action WalkAction = new Action_Walk();
+                    WalkAction.Initialize<T>(data);
+                    actionList.Add(WalkAction);
+                    return WalkAction;
+
+                default:
+                    throw new ArgumentException("Action Not Implemented Yet!");
+            }      
         }
         
-        public virtual void AddAction(NPC_Action action)
+        public virtual void AddAction<T>(ActionType actionType, T data)
         {
-            if(action== null)
+            NPC_Action action = CreateAction<T>(actionType, data);
+
+            if (action== null)
                 throw new ArgumentNullException("Action is Null");
 
-            if(!Actions.Contains(action)) 
-                Actions.Add(action);
+            if(!actionList.Contains(action))
+                actionList.Add(action);
         }
+
         public virtual void StateUpdate()
         {
-            if(Actions.Count > 0)
-                foreach (var action in Actions)
+            if (actionList.Count > 0)
+            {
+                foreach (var action in actionList.ToList<NPC_Action>())
+                {
                     PerformAction(action);
-            else
-            {
-                //Is this thing going to invoke more than once before the state is removed ??
-                RemoveState.Invoke();
+                    if (action.IsActionCompleted())
+                        actionList.Remove(action);
+                }
             }
-        }
-
-        public virtual void RemoveAction(NPC_Action action)
-        {
-            if (!Actions.Contains(action))
-            {
-                throw new ArgumentException("Invalid Action Remove Operation");
-            }
-
-            Actions.Remove(action);
         }
 
         public virtual void PerformAction(NPC_Action action)
@@ -63,10 +75,6 @@ namespace NPC
 
         public virtual void OnStateDisabled()
         {
-            if (subscriber == null)
-                throw new ArgumentNullException("Subscriber to state event is null");
-            
-            RemoveState -= subscriber;
 
         }
 
@@ -74,8 +82,16 @@ namespace NPC
         {
             OnStateDisabled();
 
-            Actions.Clear();
+            actionList.Clear();
         }
+        public virtual bool IsStateOver()
+        {
+            if(actionList.Count > 0)
+            {
+                return false;
+            }
 
+            return true;
+        }
     }
 }

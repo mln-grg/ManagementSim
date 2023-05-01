@@ -5,14 +5,36 @@ using System;
 
 public class NPC_StateMachine : MonoBehaviour
 {
-    [SerializeField] private Stack<NPC_State> states;
+    [SerializeField] private Stack<NPC_State> states = new Stack<NPC_State>();
     [SerializeField] private NPC_State currentState;
 
 
-    public void SetCurrentState(NPC_State state, NPC_Action action)
+    public StateType GetCurrentState()
     {
-        if(state == null)
-            throw new ArgumentNullException("Trying to set Null State");
+        if(currentState!=null)
+            return currentState.type;
+
+        return StateType.Empty;
+    }
+
+    public void SetCurrentState<T>(StateType stateType, ActionType actionType, T data)
+    {
+        NPC_State state;
+
+       switch (stateType)
+        {
+            case StateType.Idle:
+                state = new NPCState_Idle();
+                break;
+            case StateType.Travel:
+                state = new NPCState_Travel();
+                break;
+            case StateType.Task:
+                state = new NPCState_PerformTask();
+                break;
+            default:
+                throw new Exception("Invalid State Transition!");
+        }
 
         if (currentState != null)
         {
@@ -21,14 +43,30 @@ public class NPC_StateMachine : MonoBehaviour
             currentState= null;
         }
 
-        state = new NPC_State();
-        state.AddAction(action);
-
         states.Push(state);
 
         currentState= state;
 
-        currentState.OnStateEnter(RemoveCurrentState);
+        currentState.OnStateEnter<T>(stateType,actionType,data);
+    }
+
+    private void Update()
+    {
+        if (currentState != null)
+        {
+            currentState.StateUpdate();
+
+            if (currentState.IsStateOver())
+                RemoveCurrentState();
+        }
+        
+    }
+    public void AddActionToCurrentState<T>(ActionType actionType, T data)
+    {
+        if(currentState!= null)
+        {
+            currentState.AddAction(actionType, data);
+        }
     }
 
     public void RemoveCurrentState()
@@ -41,15 +79,8 @@ public class NPC_StateMachine : MonoBehaviour
         currentState.OnStateExit();
         states.Pop();
         currentState= states.Peek();
-        currentState.OnStateEnabled(RemoveCurrentState);
+        currentState.OnStateEnabled();
         
     }
 
-    private void Update()
-    {
-        if (currentState != null)
-        {
-            currentState.StateUpdate();
-        }
-    }
 }
