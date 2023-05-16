@@ -4,26 +4,27 @@ using System;
 
 public class Action_Idle : NPC_Action
 {
-    private Material PlayerMaterial;
-    private float nextInterval;
+    Animator animController;
     public override void Initialize<T>(T _data)
     {
-        FieldInfo<Material> matInfo = _data as FieldInfo<Material>; 
-        PlayerMaterial = matInfo.data as Material;
+        FieldInfo<object> idelInfo = _data as FieldInfo<object>;
 
-        if(PlayerMaterial == null)
-        {
-            throw new ArgumentException("Passed data to action is invalid");
-        }
+        if (idelInfo == null)
+            throw new Exception("Invalid Field Info");
+
+        if (!idelInfo.gO)
+            throw new Exception("No gameObjectPassedIn");
+
+        animController = idelInfo.gO.GetComponent<Animator>();
+
+        if (!animController)
+            throw new NotImplementedException("No Animator Component");
+
+        
     }
 
     public override void DoAction()
     {
-        if(nextInterval<0)
-        {
-            PlayerMaterial.color = UnityEngine.Random.ColorHSV();
-            nextInterval = 0.5f;
-        }
-        nextInterval-=Time.deltaTime;
+        animController.Play("Idle");
     }
 }

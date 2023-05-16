@@ -7,13 +7,10 @@ namespace NPC
     [Serializable]
     public class NPC_State
     {
-        public StateType type;
-
         protected List<NPC_Action> actionList = new List<NPC_Action>();
 
-        public virtual void OnStateEnter<T>(StateType stateType , ActionType actionType , T data)
+        public virtual void OnStateEnter<T>(Type actionType , T data)
         {
-            type = stateType;
             AddAction<T>(actionType,data);
             OnStateEnabled();
         }
@@ -21,38 +18,6 @@ namespace NPC
         public virtual void OnStateEnabled()
         {
            
-        }
-
-        private NPC_Action CreateAction<T>(ActionType actionType , T data)
-        {
-            switch (actionType)
-            {
-                case ActionType.Idle:
-                    NPC_Action IdleAction = new Action_Idle();
-                    IdleAction.Initialize<T>(data);
-                    actionList.Add(IdleAction);
-                    return IdleAction;
-
-                case ActionType.Walk:
-                    NPC_Action WalkAction = new Action_Walk();
-                    WalkAction.Initialize<T>(data);
-                    actionList.Add(WalkAction);
-                    return WalkAction;
-
-                default:
-                    throw new ArgumentException("Action Not Implemented Yet!");
-            }      
-        }
-        
-        public virtual void AddAction<T>(ActionType actionType, T data)
-        {
-            NPC_Action action = CreateAction<T>(actionType, data);
-
-            if (action== null)
-                throw new ArgumentNullException("Action is Null");
-
-            if(!actionList.Contains(action))
-                actionList.Add(action);
         }
 
         public virtual void StateUpdate()
@@ -93,5 +58,31 @@ namespace NPC
 
             return true;
         }
+        public virtual void AddAction<T>(Type actionType, T data)
+        {
+            NPC_Action action = CreateAction<T>(actionType, data);
+
+            if (action== null)
+                throw new ArgumentNullException("Action is Null");
+
+            if(!actionList.Contains(action))
+                actionList.Add(action);
+        }
+
+        private NPC_Action CreateAction<T>(Type actionType , T data)
+        {
+            Object actionObj = Activator.CreateInstance(actionType);
+
+            NPC_Action action = actionObj as NPC_Action;
+
+            if(action == null)
+                throw new InvalidCastException("Passed in Action Type was Invalid!");
+
+            action.Initialize<T>(data);
+
+            return action;
+               
+        }
+        
     }
 }

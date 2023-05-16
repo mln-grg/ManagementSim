@@ -1,6 +1,4 @@
 using UnityEngine;
-using CustomGameEvents;
-using System.Collections.Generic;
 using NPC;
 using System;
 
@@ -8,7 +6,7 @@ using System;
 public class Brain : MonoBehaviour
 {
     private NPC_StateMachine stateMachineRef;
-    [SerializeField] private Material playerMaterial;
+    [SerializeField] private NPCType npcType;
 
     private void Awake()
     {
@@ -19,11 +17,11 @@ public class Brain : MonoBehaviour
 
     private void OnEnable()
     {
-        FieldInfo<Material> materialInfo = new FieldInfo<Material>(this.gameObject, playerMaterial);
-        RequestStateChange(StateType.Idle, ActionType.Idle, materialInfo);
+        FieldInfo<object> emptyInfo = new FieldInfo<object>(this.gameObject,null);
+        RequestStateChange(typeof(Settler_Idle), typeof(Action_Idle), emptyInfo);
     }
 
-    public void RequestStateChange<T>(StateType stateType, ActionType actionType , T data)
+    public void RequestStateChange<T>(Type stateType, Type actionType , T data)
     {
         stateMachineRef.SetCurrentState(stateType, actionType , data);
     }

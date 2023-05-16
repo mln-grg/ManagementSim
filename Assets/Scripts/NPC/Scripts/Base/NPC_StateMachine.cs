@@ -6,35 +6,23 @@ using System;
 public class NPC_StateMachine : MonoBehaviour
 {
     [SerializeField] private Stack<NPC_State> states = new Stack<NPC_State>();
-    [SerializeField] private NPC_State currentState;
+    [SerializeField] private string CurrentState;
 
-
-    public StateType GetCurrentState()
+    private NPC_State currentState;
+    public string GetCurrentStateType()
     {
-        if(currentState!=null)
-            return currentState.type;
-
-        return StateType.Empty;
+       return CurrentState;
     }
 
-    public void SetCurrentState<T>(StateType stateType, ActionType actionType, T data)
+    public void SetCurrentState<T>(Type stateType, Type actionType, T data)
     {
-        NPC_State state;
+        object stateObj = Activator.CreateInstance(stateType);
 
-       switch (stateType)
-        {
-            case StateType.Idle:
-                state = new NPCState_Idle();
-                break;
-            case StateType.Travel:
-                state = new NPCState_Travel();
-                break;
-            case StateType.Task:
-                state = new NPCState_PerformTask();
-                break;
-            default:
-                throw new Exception("Invalid State Transition!");
-        }
+        NPC_State state = stateObj as NPC_State;
+
+        if (state == null)
+            throw new InvalidCastException("Passed in State Type was Invalid");
+
 
         if (currentState != null)
         {
@@ -47,7 +35,9 @@ public class NPC_StateMachine : MonoBehaviour
 
         currentState= state;
 
-        currentState.OnStateEnter<T>(stateType,actionType,data);
+        CurrentState= currentState.ToString();
+
+        currentState.OnStateEnter<T>(actionType,data);
     }
 
     private void Update()
@@ -61,7 +51,7 @@ public class NPC_StateMachine : MonoBehaviour
         }
         
     }
-    public void AddActionToCurrentState<T>(ActionType actionType, T data)
+    public void AddActionToCurrentState<T>(Type actionType, T data)
     {
         if(currentState!= null)
         {
@@ -73,7 +63,7 @@ public class NPC_StateMachine : MonoBehaviour
     {
         if(states.Count ==1) 
         {
-            throw new ArgumentException("Trying to remove Idle State");
+            throw new ArgumentException("Trying to remove Last State");
         }
 
         currentState.OnStateExit();

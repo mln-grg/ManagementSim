@@ -8,7 +8,12 @@ public enum StateType
 
 public enum ActionType
 {
-    Idle,
+    ChangeColors,
     Walk,
-    Task
+    Work
+}
+
+public enum NPCType
+{
+    Settler
 }

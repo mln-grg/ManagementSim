@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace NPC
 {
+    [Serializable]
     public abstract class NPC_Action
     {
         protected bool actionComplete = false;

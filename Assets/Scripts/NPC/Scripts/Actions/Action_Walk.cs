@@ -1,10 +1,13 @@
 using System;
 using UnityEngine;
 using NPC;
+
+[Serializable]
 public class Action_Walk : NPC_Action
 {
     private Vector3 destination;
     private GameObject player;
+    private Animator animController;
 
     public override void Initialize<T>(T _data)
     {
@@ -15,12 +18,26 @@ public class Action_Walk : NPC_Action
 
         if (destination == null ||!player)
             throw new ArgumentException("Passed data was Invalid");
+
+        animController = movementInfo.gO.GetComponent<Animator>();
+
+        if (!animController)
+            throw new NotImplementedException("No Animator Component");
+
+        
     }
     public override void DoAction()
     {
+        if(actionComplete) return;
+
         if (player.transform.position != destination)
         {
-            player.transform.position = Vector3.MoveTowards(player.transform.position,destination,Time.deltaTime*5f);
+            animController.Play("Walk");
+            Quaternion lookDirection = Quaternion.LookRotation(destination - player.transform.position);
+
+            player.transform.rotation = lookDirection;
+
+            player.transform.position = Vector3.MoveTowards(player.transform.position,destination,Time.deltaTime*1);
         }
         else
         {
